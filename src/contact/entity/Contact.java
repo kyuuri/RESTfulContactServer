@@ -7,9 +7,11 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * A person is a contact with a name, title, and email.
+ * A person is a contact with a name, title, email and phone number.
  * title is text to display for this contact in a list of contacts,
  * such as a nickname or company name.
+ * 
+ * @author jim, editted by Sarathit Sangtaweep 5510546182 
  */
 @XmlRootElement(name="contact")
 @XmlAccessorType(XmlAccessType.FIELD)

@@ -11,7 +11,7 @@ import contact.entity.Contact;
  * Use DaoFactory to get an instance of this class, such as:
  * dao = DaoFactory.getInstance().getContactDao()
  * 
- * @author jim
+ * @author jim, editted by Sarathit Sangtaweep 5510546182
  */
 public class ContactDao {
 	private List<Contact> contacts;
@@ -40,6 +40,10 @@ public class ContactDao {
 		return null;
 	}
 
+	/**
+	 * Find all contacts
+	 * @return all contacts
+	 */
 	public List<Contact> findAll() {
 		return java.util.Collections.unmodifiableList(contacts);
 	}
@@ -108,6 +112,12 @@ public class ContactDao {
 		return id; // this should never happen
 	}
 	
+	/**
+	 * Find the list of the contact which contains the query string.
+	 * (title matched with q)
+	 * @param q the query string
+	 * @return list of the contact which contains the query string.
+	 */
 	public List<Contact> findByTitle(String q){
 		List<Contact> list = new ArrayList<Contact>();
 		for(int i = 0 ; i < contacts.size() ; i++){
