@@ -35,6 +35,13 @@ public class JettyMain {
 		waitForExit();
 	}
 	
+	/**
+	 * Create a Jetty server and a context, add Jetty ServletContainer
+	 * which dispatches requests to JAX-RS resource objects,
+	 * and start the Jetty server.
+	 * @param port port of the server.
+	 * @return the url for connecting to the server.
+	 */
 	public static String startServer(int port){
 		server = new Server( port );
 		
@@ -57,6 +64,9 @@ public class JettyMain {
 		return "";
 	}
 	
+	/**
+	 * Wait for stopping the server by pressing enter.
+	 */
 	public static void waitForExit() {
 		try {
 			System.out.println("Server started.  Press ENTER to exit.");
@@ -67,6 +77,9 @@ public class JettyMain {
 		}
 	}
 	
+	/**
+	 * Stop the server.
+	 */
 	public static void stopServer(){
 		try {
 			MemDaoFactory.getInstance().shutdown();

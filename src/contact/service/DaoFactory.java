@@ -1,6 +1,5 @@
 package contact.service;
 
-import contact.service.mem.MemContactDao;
 import contact.service.mem.MemDaoFactory;
 
 /**

@@ -19,10 +19,9 @@ import contact.service.ContactDao;
  * This DAO uses an in-memory list of contacts, which may
  * be lost when the application exits.
  * Use DaoFactory to get an instance of this class, such as:
- * <p><tt>
  * dao = DaoFactory.getInstance().getContactDao()
- * </tt>
- * @author jim
+ * 
+ * @author jim editted by Sarathit Sangtaweep 5510546182
  */
 public class MemContactDao implements ContactDao {
 	private List<Contact> contacts;
@@ -141,6 +140,11 @@ public class MemContactDao implements ContactDao {
 		return list;
 	}
 	
+	/**
+	 * Import the existing file for getting the saved contacts.
+	 * By using JAXB to unmarshal.
+	 * @param path path of the importing file.
+	 */
 	public void importFile(String path){
 		JAXBContext context;
 		try {

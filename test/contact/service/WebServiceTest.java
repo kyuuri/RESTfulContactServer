@@ -18,11 +18,23 @@ import org.junit.Test;
 
 import contact.jetty.JettyMain;
 
+/**
+ * JUnit Test class for testing ContactResource
+ * There are 2 test for each operation which are GET, POST, PUT and DELETE method.
+ * For each two, one is success and another one is fail.
+ * 
+ * @author Sarathit Sangtaweep 5510546182
+ */
 public class WebServiceTest {
 
 	 private static String serviceUrl;
 	 private static HttpClient client;
 	 
+	 /**
+	  * Do before the class, to prepare the server
+	  * and start the client.
+	  * @throws Exception
+	  */
 	 @BeforeClass
 	 public static void doFirst() throws Exception {
 		 // Start the Jetty server. 
@@ -32,12 +44,22 @@ public class WebServiceTest {
 		 client.start();
 	 }
 	 
+	 /**
+	  * Do after class, for shutting down the server
+	  * and stop the client.
+	  */
 	 @AfterClass
 	 public static void doLast( ) {
 		 // stop the Jetty server after the last test
 		 JettyMain.stopServer();
 	 }
 	 
+	 /**
+	  * Test Success GET.
+	  * @throws InterruptedException
+	  * @throws ExecutionException
+	  * @throws TimeoutException
+	  */
 	 @Test
 	 public void testGetPass() throws InterruptedException, ExecutionException, TimeoutException {
 		 ContentResponse res = client.GET(serviceUrl+"contacts/1");
@@ -45,6 +67,12 @@ public class WebServiceTest {
 		 assertTrue("Have body content", !res.getContentAsString().isEmpty());
 	 }
 	 
+	 /**
+	  * Test Fail GET.
+	  * @throws InterruptedException
+	  * @throws ExecutionException
+	  * @throws TimeoutException
+	  */
 	 @Test
 	 public void testGetFail() throws InterruptedException, ExecutionException, TimeoutException {
 		 ContentResponse res = client.GET(serviceUrl+"contacts/999");
@@ -52,6 +80,12 @@ public class WebServiceTest {
 		 assertTrue("Empty Content", res.getContentAsString().isEmpty());
 	 }
 
+	 /**
+	  * Test success POST.
+	  * @throws InterruptedException
+	  * @throws ExecutionException
+	  * @throws TimeoutException
+	  */
 	 @Test
 	 public void testPostPass() throws InterruptedException, ExecutionException, TimeoutException {
 		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
@@ -70,6 +104,12 @@ public class WebServiceTest {
 		 assertTrue("Check by using GET ,request posted id.", !res.getContentAsString().isEmpty() );
 	 }
 	 
+	 /**
+	  * Test Fail Post.
+	  * @throws InterruptedException
+	  * @throws TimeoutException
+	  * @throws ExecutionException
+	  */
 	 @Test
 	 public void testPostFail() throws InterruptedException, TimeoutException, ExecutionException {
 		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
@@ -86,6 +126,12 @@ public class WebServiceTest {
 		 assertEquals("Should response CONFLICT because the id is already exist", Status.CONFLICT.getStatusCode(), res.getStatus());
 	 }
 
+	 /**
+	  * Test success PUT
+	  * @throws InterruptedException
+	  * @throws TimeoutException
+	  * @throws ExecutionException
+	  */
 	 @Test
 	 public void testPutPass() throws InterruptedException, TimeoutException, ExecutionException {
 		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
@@ -102,6 +148,12 @@ public class WebServiceTest {
 		 assertEquals("PUT Success should response 200 OK", Status.OK.getStatusCode(), res.getStatus());
 	 }
 	 
+	 /**
+	  * Test Fail PUT
+	  * @throws InterruptedException
+	  * @throws TimeoutException
+	  * @throws ExecutionException
+	  */
 	 @Test
 	 public void testPutFail() throws InterruptedException, TimeoutException, ExecutionException {
 		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
@@ -118,6 +170,12 @@ public class WebServiceTest {
 		 assertEquals("PUT Fail should response 400 BAD REQUEST", Status.BAD_REQUEST.getStatusCode(), res.getStatus());
 	 }
 	 
+	 /**
+	  * Test success DELETE
+	  * @throws InterruptedException
+	  * @throws ExecutionException
+	  * @throws TimeoutException
+	  */
 	 @Test
 	 public void testDeletePass() throws InterruptedException, ExecutionException, TimeoutException {
 		 Request request = client.newRequest(serviceUrl+"contacts/555");
@@ -129,6 +187,12 @@ public class WebServiceTest {
 		 assertTrue("Really deleted", res.getContentAsString().isEmpty());
 	 }
 	 
+	 /**
+	  * Test fail DELETE
+	  * @throws InterruptedException
+	  * @throws TimeoutException
+	  * @throws ExecutionException
+	  */
 	 @Test
 	 public void testDeleteFail() throws InterruptedException, TimeoutException, ExecutionException {
 		 Request request = client.newRequest(serviceUrl+"contacts/999");

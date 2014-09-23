@@ -1,6 +1,5 @@
 package contact.service.jpa;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -18,12 +17,9 @@ import contact.service.ContactDao;
  * Data access object for saving and retrieving contacts,
  * using JPA.
  * To get an instance of this class use:
- * <p>
- * <tt>
  * dao = DaoFactory.getInstance().getContactDao()
- * </tt>
  * 
- * @author jim
+ * @author jim editted by Sarathit Sangtaweep 5510546182
  */
 public class JpaContactDao implements ContactDao {
 	/** the EntityManager for accessing JPA persistence services. */

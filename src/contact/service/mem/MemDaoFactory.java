@@ -18,7 +18,7 @@ import contact.service.DaoFactory;
  * 
  * @see contact.service.DaoFactory
  * @version 2014.09.19
- * @author jim
+ * @author jim editted by Sarathit Sangtaweep 5510546182
  */
 public class MemDaoFactory extends DaoFactory {
 	//for my computer using C: - access denied ,so I changed to D:
