@@ -1,130 +1,72 @@
 package contact.service;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
 
 import contact.entity.Contact;
-
 /**
- * Data access object for saving and retrieving contacts.
- * This DAO uses an in-memory list of person.
- * Use DaoFactory to get an instance of this class, such as:
- * dao = DaoFactory.getInstance().getContactDao()
+ * Interface defines the operations required by 
+ * a DAO for Contacts.
  * 
- * @author jim, editted by Sarathit Sangtaweep 5510546182
+ * @author jim
  */
-public class ContactDao {
-	private List<Contact> contacts;
-	private AtomicLong nextId;
-	
-	public ContactDao() {
-		contacts = new ArrayList<Contact>();
-		nextId = new AtomicLong(1000L);
-		createTestContact(1);
-	}
-	
-	/** add a single contact with given id for testing. */
-	private void createTestContact(long id) {
-		Contact test = new Contact("Test contact", "Joe Experimental", "none@testing.com", "123456789");
-		test.setId(id);
-		contacts.add(test);
-	}
+public interface ContactDao {
 
 	/** Find a contact by ID in contacts.
 	 * @param the id of contact to find
 	 * @return the matching contact or null if the id is not found
 	 */
-	public Contact find(long id) {
-		for(Contact c : contacts) 
-			if (c.getId() == id) return c;
-		return null;
-	}
+	public abstract Contact find(long id);
 
 	/**
-	 * Find all contacts
-	 * @return all contacts
+	 * Return all the persisted contacts as a List.
+	 * There is no guarantee what implementation of
+	 * List is returned, so caller should use only
+	 * List methods (not, say ArrayList).
+	 * @return list of all contacts in persistent storage.
+	 *   If no contacts, returns an empty list.
 	 */
-	public List<Contact> findAll() {
-		return java.util.Collections.unmodifiableList(contacts);
-	}
+	public abstract List<Contact> findAll();
+	
+	/**
+	 * Find a contact whose title starts with the  
+	 * string parameter (the way Gmail does).
+	 * @param prefix a string containing the start 
+	 * of a contact title.  Must not be null.
+	 * @return List of matching contacts. Return an empty list
+	 * if no matches.
+	 */
+	public abstract List<Contact> findByTitle(String prefix);
 
 	/**
-	 * Delete a saved contact.
-	 * @param id the id of contact to delete
+	 * Delete a saved contact by id.
+	 * @param id the id of contact to delete. Should be positive.
 	 * @return true if contact is deleted, false otherwise.
 	 */
-	public boolean delete(long id) {
-		for(int k=0; k<contacts.size(); k++) {
-			if (contacts.get(k).getId() == id) {
-				contacts.remove(k);
-				return true;
-			}
-		}
-		return false;
-	}
-	
+	public abstract boolean delete(long id);
+
 	/**
 	 * Save or replace a contact.
 	 * If the contact.id is 0 then it is assumed to be a
 	 * new (not saved) contact.  In this case a unique id
 	 * is assigned to the contact.  
-	 * If the contact.id is not zero and the contact already
-	 * exists in saved contacts, the old contact is replaced.
+	 * If the contact id is not zero and there is a saved
+	 * contact with same id, then the old contact is replaced.
 	 * @param contact the contact to save or replace.
 	 * @return true if saved successfully
 	 */
-	public boolean save(Contact contact) {
-		if (contact.getId() == 0) {
-			contact.setId( getUniqueId() );
-			return contacts.add(contact);
-		}
-		// check if this contact is already in persistent storage
-		Contact other  = find(contact.getId());
-		if (other == contact) return true;
-		if ( other != null ) contacts.remove(other);
-		return contacts.add(contact);
-	}
+	public abstract boolean save(Contact contact);
 
 	/**
-	 * Update a Contact.  Only the non-null fields of the
-	 * update are applied to the contact.
+	 * Update a Contact.  If the contact with same id
+	 * as the update is already in persistent storage,
+	 * then all fields of the contact are replaced with
+	 * values in the update (including null values!).
+	 * The id of the update must match the id of a contact
+	 * already persisted.  If not, false is returned.
 	 * @param update update info for the contact.
 	 * @return true if the update is applied successfully.
 	 */
-	public boolean update(Contact update) {
-		Contact contact = find(update.getId());
-		if (contact == null) return false;
-		contact.applyUpdate(update);
-		save(contact);
-		return true;
-	}
-	
-	/**
-	 * Get a unique contact ID.
-	 * @return unique id not in persistent storage
-	 */
-	private synchronized long getUniqueId() {
-		long id = nextId.getAndAdd(1L);
-		while( id < Long.MAX_VALUE ) {	
-			if (find(id) == null) return id;
-			id = nextId.getAndAdd(1L);
-		}
-		return id; // this should never happen
-	}
-	
-	/**
-	 * Find the list of the contact which contains the query string.
-	 * (title matched with q)
-	 * @param q the query string
-	 * @return list of the contact which contains the query string.
-	 */
-	public List<Contact> findByTitle(String q){
-		List<Contact> list = new ArrayList<Contact>();
-		for(int i = 0 ; i < contacts.size() ; i++){
-			if(contacts.get(i).getTitle().contains(q)){
-				list.add(contacts.get(i));
-			}
-		}
-		return list;
-	}
+	public abstract boolean update(Contact update);
+
+
 }

@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jersey2"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jersey2ext"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jetty"/>
 	<classpathentry kind="lib" path="C:/Eclipse_library/jetty/lib/servlet-api-3.1.jar"/>
+	<classpathentry kind="lib" path="D:/oop/RESTfulContactServer/lib/derby.jar"/>
+	<classpathentry kind="lib" path="D:/oop/RESTfulContactServer/lib/eclipselink.jar"/>
+	<classpathentry kind="lib" path="D:/oop/RESTfulContactServer/lib/javax.persistence_2.1.0.v201304241213.jar"/>
+	<classpathentry kind="lib" path="D:/oop/RESTfulContactServer/lib/org.eclipse.persistence.jpa.modelgen_2.5.2.v20140319-9ad6abd.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

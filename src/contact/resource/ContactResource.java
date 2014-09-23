@@ -14,14 +14,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 
 import contact.entity.Contact;
 import contact.service.ContactDao;
-import contact.service.DaoFactory;
+import contact.service.mem.MemContactDao;
+import contact.service.mem.MemDaoFactory;
 
 /**
  * ContactResource provides RESTful web resources using JAX-RS
@@ -34,10 +38,13 @@ import contact.service.DaoFactory;
 @Path("/contacts")
 public class ContactResource {
 	
+	@Context 
+	UriInfo uriInfo;
+	
 	private ContactDao dao;
 	
 	public ContactResource(){
-		dao = DaoFactory.getInstance().getContactDao();
+		dao = MemDaoFactory.getInstance().getContactDao();
 	}
 	
 	/**
@@ -58,7 +65,9 @@ public class ContactResource {
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getContact(@PathParam("id") long id) {
-		return Response.ok(dao.find(id)).build();
+		if(dao.find(id) != null)
+			return Response.ok(dao.find(id)).build();
+		return Response.noContent().build();
 	}
 
 	/**
@@ -69,7 +78,7 @@ public class ContactResource {
 	 */
 	@GET
 	@Produces(MediaType.APPLICATION_XML)
-	public Response getContact(@QueryParam("q") String query) {
+	public Response getContact(@QueryParam("title") String query) {
 		GenericEntity<List<Contact>> ent = new GenericEntity<List<Contact>>(dao.findAll()){};
 		if(query == null) return getContacts();
 		
@@ -86,15 +95,21 @@ public class ContactResource {
 	 */
 	@POST
 	@Consumes(MediaType.APPLICATION_XML)
-	public Response putContact(JAXBElement<Contact> contact) {
+	public Response postContact(JAXBElement<Contact> contact) {
 		Contact c = (Contact)contact.getValue();
-		dao.save(c);
-		try {
-			return Response.created(new URI("localhost:8080/contacts/" + c.getId())).type(MediaType.APPLICATION_XML).entity(contact).build();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+		if(dao.find(c.getId()) == null){
+			boolean success = dao.save(c);
+			if(success){
+				try {
+					return Response.created(new URI("localhost:8080/contacts/" + c.getId())).type(MediaType.APPLICATION_XML).entity(contact).build();
+				} catch (URISyntaxException e) {}
+			}
+			return Response.status(Status.BAD_REQUEST).build();
 		}
-		return null;
+		else{
+			return Response.status(Status.CONFLICT).location(uriInfo.getRequestUri()).entity(contact).build();
+		}
+		
 	}
 	
 	/**
@@ -106,14 +121,16 @@ public class ContactResource {
 	@PUT
 	@Path("{id}")
 	@Consumes(MediaType.APPLICATION_XML)
-	public Response postContact( @PathParam("id") long id, JAXBElement<Contact> contact){
+	public Response putContact( @PathParam("id") long id, JAXBElement<Contact> contact){
 		Contact c = (Contact)contact.getValue();
-		if(dao.update(c)){
-			try {
-				return Response.created(new URI("localhost:8080/contacts/"+id)).build();
-			} catch (URISyntaxException e) {}
+		boolean success = false;
+		if(c.getId() == id){
+			success = dao.update(c);
 		}
-		return Response.noContent().build();
+		if(success){
+			return Response.ok().build();
+		}
+		return Response.status(Status.BAD_REQUEST).build();
 	}
 	
 	/**
@@ -125,8 +142,11 @@ public class ContactResource {
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response deleteContact( @PathParam("id") long id){
-		dao.delete(id);
-		return Response.ok().entity(id + "deleted.").build();
+		boolean success = dao.delete(id);
+		if(success){
+			return Response.ok().entity(id + "deleted.").build();
+		}
+		return Response.status(Status.BAD_REQUEST).build();
 	}
 }
 

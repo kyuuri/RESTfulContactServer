@@ -5,6 +5,9 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ServerProperties;
 
+import contact.service.DaoFactory;
+import contact.service.mem.MemDaoFactory;
+
 /**
  * Main class for running the application and set path of the url
  * which link to the resource.
@@ -17,6 +20,7 @@ public class JettyMain {
 	 * The default port to listen on. Typically 80 or 8080.  
 	 */
 	static final int PORT = 8080;
+	private static Server server;
 
 	/**
 	 * Create a Jetty server and a context, add Jetty ServletContainer
@@ -27,8 +31,12 @@ public class JettyMain {
 	 * @throws Exception if Jetty server encounters any problem
 	 */
 	public static void main(String[] args) throws Exception {
-		int port = PORT;  // the port the server will listen to for HTTP requests
-		Server server = new Server( port );
+		startServer(PORT);
+		waitForExit();
+	}
+	
+	public static String startServer(int port){
+		server = new Server( port );
 		
 		ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
 		context.setContextPath("/");
@@ -41,12 +49,29 @@ public class JettyMain {
 		server.setHandler( context );
 		
 		System.out.println("Starting Jetty server on port " + port);
-		server.start();
+		try {
+			server.start();
+			return server.getURI().toString();
+		} catch (Exception e) {}
 		
-		System.out.println("Server started.  Press ENTER to stop it.");
-		int ch = System.in.read();
-		System.out.println("Stopping server.");
-		server.stop();
+		return "";
+	}
+	
+	public static void waitForExit() {
+		try {
+			System.out.println("Server started.  Press ENTER to exit.");
+			System.in.read();
+			System.out.println("Stopping server.");
+			stopServer();
+		} catch (Exception e) {
+		}
+	}
+	
+	public static void stopServer(){
+		try {
+			MemDaoFactory.getInstance().shutdown();
+			server.stop();
+		} catch (Exception e) {}
 	}
 	
 }

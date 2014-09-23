@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Tue Sep 23 19:20:58 ICT 2014:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.11.1.1 - (1616546): instance a816c00e-0148-a275-20f1-000002854390 
+on database directory D:\tmp\contactdb with class loader sun.misc.Launcher$AppClassLoader@134510ac 
+Loaded from file:/D:/oop/RESTfulContactServer/lib/derby.jar
+java.vendor=Oracle Corporation
+java.runtime.version=1.7.0_11-b21
+user.dir=D:\oop\RESTfulContactServer
+os.name=Windows 7
+os.arch=amd64
+os.version=6.1
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

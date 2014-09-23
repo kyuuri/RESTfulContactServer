@@ -112,6 +112,21 @@ public class Contact implements Serializable {
 	}
 	
 	/**
+	 * Force Update this contact's data from another Contact even if some attribute is null.
+	 * The id field of the update must either be 0 or the same value as this contact!
+	 * @param update the source of update values
+	 */
+	public void forceApplyUpdate(Contact update) {
+		if (update == null) return;
+		if (update.getId() != 0 && update.getId() != this.getId() )
+			throw new IllegalArgumentException("Update contact must have same id as contact to update");
+		this.setTitle(update.getTitle());	
+		this.setName(update.getName()); 
+		this.setEmail(update.getEmail());
+		this.setPhoneNumber(update.getPhoneNumber());
+	}
+	
+	/**
 	 * Test if a string is null or only whitespace.
 	 * @param arg the string to test
 	 * @return true if string variable is null or contains only whitespace
