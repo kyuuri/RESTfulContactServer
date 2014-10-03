@@ -8,13 +8,16 @@ import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -24,13 +27,14 @@ import javax.xml.bind.JAXBElement;
 
 import contact.entity.Contact;
 import contact.service.ContactDao;
-import contact.service.mem.MemContactDao;
 import contact.service.mem.MemDaoFactory;
 
 /**
  * ContactResource provides RESTful web resources using JAX-RS
  * annotations to map requests to request handling code,
  * and to inject resources into code.
+ * This ContactResource can now handle If-Match and If-None-Match
+ * by using ETag.
  * 
  * @author Sarathit Sangtaweep 5510546182
  */
@@ -41,10 +45,15 @@ public class ContactResource {
 	@Context 
 	UriInfo uriInfo;
 	
+	private CacheControl cc;
+	
 	private ContactDao dao;
 	
 	public ContactResource(){
 		dao = MemDaoFactory.getInstance().getContactDao();
+		cc = new CacheControl();
+		cc.setMaxAge(86400);
+		cc.setPrivate(true);
 	}
 	
 	/**
@@ -53,7 +62,9 @@ public class ContactResource {
 	 */
 	public Response getContacts() {
 		GenericEntity<List<Contact>> ent = new GenericEntity<List<Contact>>(dao.findAll()){};
-		return Response.ok(ent).build();
+		
+		EntityTag etag =  new EntityTag(ent.hashCode()+"");
+		return Response.ok(ent).cacheControl(cc).tag(etag).build();
 	}	
 
 	/**
@@ -64,9 +75,26 @@ public class ContactResource {
 	@GET
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_XML)
-	public Response getContact(@PathParam("id") long id) {
-		if(dao.find(id) != null)
-			return Response.ok(dao.find(id)).build();
+	public Response getContact(@HeaderParam("If-Match") String match, @HeaderParam("If-None-Match") String noneMatch, @PathParam("id") long id) {
+		Contact contact = dao.find(id);
+		if(contact != null){
+			EntityTag etag = new EntityTag(contact.hashCode()+"");
+			
+			if(noneMatch == null){
+				return Response.ok(contact).cacheControl(cc).tag(etag).build();
+			}
+			else{
+				noneMatch = noneMatch.replace("\"", "");
+				
+				if(noneMatch.equals(etag.getValue())){
+					return Response.notModified().build();
+				}
+				else{
+					return Response.ok(contact).cacheControl(cc).tag(etag).build();
+				}
+			}
+			
+		}
 		return Response.noContent().build();
 	}
 
@@ -78,12 +106,30 @@ public class ContactResource {
 	 */
 	@GET
 	@Produces(MediaType.APPLICATION_XML)
-	public Response getContact(@QueryParam("title") String query) {
-		GenericEntity<List<Contact>> ent = new GenericEntity<List<Contact>>(dao.findAll()){};
+	public Response getContact(@HeaderParam("If-Match") String match, @HeaderParam("If-None-Match") String noneMatch, @QueryParam("title") String query) {
 		if(query == null) return getContacts();
 		
-		ent = new GenericEntity<List<Contact>>(dao.findByTitle(query)){};
-		return Response.ok(ent).build();
+		List<Contact> list = dao.findByTitle(query);
+		GenericEntity<List<Contact>> ent = new GenericEntity<List<Contact>>(list){};
+		EntityTag etag = new EntityTag(ent.hashCode()+"");
+		
+		if(!list.isEmpty()){
+		
+			if(noneMatch == null){
+				return Response.ok(ent).cacheControl(cc).tag(etag).build();
+			}
+			else{
+				noneMatch = noneMatch.replace("\"", "");
+				
+				if(noneMatch.equals(etag.getValue())){
+					return Response.notModified().build();
+				}
+				else{
+					return Response.ok(ent).cacheControl(cc).tag(etag).build();
+				}
+			}
+		}
+		return Response.noContent().build();
 	}
 	
 
@@ -95,19 +141,24 @@ public class ContactResource {
 	 */
 	@POST
 	@Consumes(MediaType.APPLICATION_XML)
-	public Response postContact(JAXBElement<Contact> contact) {
+	public Response postContact(@HeaderParam("If-Match") String match, @HeaderParam("If-None-Match") String noneMatch, JAXBElement<Contact> contact) {
 		Contact c = (Contact)contact.getValue();
 		if(dao.find(c.getId()) == null){
+			
 			boolean success = dao.save(c);
 			if(success){
 				try {
-					return Response.created(new URI("localhost:8080/contacts/" + c.getId())).type(MediaType.APPLICATION_XML).entity(contact).build();
+					
+					EntityTag etag = new EntityTag(c.hashCode()+"");
+					return Response.created(new URI("localhost:8080/contacts/" + c.getId()))
+							.type(MediaType.APPLICATION_XML).entity(c).cacheControl(cc).tag(etag).build();
+					
 				} catch (URISyntaxException e) {}
 			}
 			return Response.status(Status.BAD_REQUEST).build();
 		}
 		else{
-			return Response.status(Status.CONFLICT).location(uriInfo.getRequestUri()).entity(contact).build();
+			return Response.status(Status.CONFLICT).location(uriInfo.getRequestUri()).entity(c).build();
 		}
 		
 	}
@@ -121,14 +172,33 @@ public class ContactResource {
 	@PUT
 	@Path("{id}")
 	@Consumes(MediaType.APPLICATION_XML)
-	public Response putContact( @PathParam("id") long id, JAXBElement<Contact> contact){
+	public Response putContact(@HeaderParam("If-Match") String match, @HeaderParam("If-None-Match") String noneMatch, @PathParam("id") long id, JAXBElement<Contact> contact){
 		Contact c = (Contact)contact.getValue();
 		boolean success = false;
+		
+		EntityTag etag = new EntityTag(c.hashCode()+"");
+		
+		if(match != null){
+			match = match.replace("\"", "");
+			
+			if(!match.equals(etag.getValue())){
+				return Response.status(Status.PRECONDITION_FAILED).build();
+			}
+		}
+		else{
+			noneMatch = noneMatch.replace("\"", "");
+			
+			if(noneMatch.equals(etag.getValue())){
+				return Response.status(Status.PRECONDITION_FAILED).build();
+			}
+		}
+		
 		if(c.getId() == id){
 			success = dao.update(c);
 		}
 		if(success){
-			return Response.ok().build();
+
+			return Response.ok(uriInfo.getAbsolutePath()+"").build();
 		}
 		return Response.status(Status.BAD_REQUEST).build();
 	}
@@ -141,10 +211,32 @@ public class ContactResource {
 	@DELETE
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_XML)
-	public Response deleteContact( @PathParam("id") long id){
-		boolean success = dao.delete(id);
-		if(success){
-			return Response.ok().entity(id + "deleted.").build();
+	public Response deleteContact(@HeaderParam("If-Match") String match, @HeaderParam("If-None-Match") String noneMatch, @PathParam("id") long id){
+		Contact c = dao.find(id);
+		boolean success = false;
+		
+		if(c != null){
+			EntityTag etag = new EntityTag(c.hashCode()+"");
+			
+			if(match != null){
+				match = match.replace("\"", "");
+				
+				if(!match.equals(etag.getValue())){
+					return Response.status(Status.PRECONDITION_FAILED).build();
+				}
+			}
+			else{
+				noneMatch = noneMatch.replace("\"", "");
+				
+				if(noneMatch.equals(etag.getValue())){
+					return Response.status(Status.PRECONDITION_FAILED).build();
+				}
+			}
+			
+			success = dao.delete(id);
+			if(success){
+				return Response.ok().entity(id + "deleted.").build();
+			}
 		}
 		return Response.status(Status.BAD_REQUEST).build();
 	}
