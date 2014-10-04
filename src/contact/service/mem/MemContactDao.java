@@ -158,5 +158,15 @@ public class MemContactDao implements ContactDao {
 			this.contacts = contactList.getContacts();
 		} catch (Exception e) {}
 	}
+	
+	/**
+	 * Reset all contacts in the list.
+	 * Use for testing only (For Unit Test to prevent posted contact)
+	 */
+	public void resetContact(){
+		contacts = new ArrayList<Contact>();
+		nextId = new AtomicLong(1000L);
+		createTestContact(1);
+	}
 
 }

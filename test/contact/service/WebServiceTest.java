@@ -15,8 +15,9 @@ import org.eclipse.jetty.http.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import contact.jetty.JettyMain;
+import contact.service.mem.MemContactDao;
+import contact.service.mem.MemDaoFactory;
 
 /**
  * JUnit Test class for testing ContactResource
@@ -29,6 +30,7 @@ public class WebServiceTest {
 
 	 private static String serviceUrl;
 	 private static HttpClient client;
+	 private static ContactDao dao;
 	 
 	 /**
 	  * Do before the class, to prepare the server
@@ -42,6 +44,16 @@ public class WebServiceTest {
 		 //System.out.println(serviceUrl);
 		 client = new HttpClient();
 		 client.start();
+		 
+		dao = MemDaoFactory.getInstance().getContactDao();
+		resetContact();
+	 }
+	 
+	 /**
+	  * Reset the contact list in dao.
+	  */
+	 public static void resetContact(){
+		 ((MemContactDao) dao).resetContact();
 	 }
 	 
 	 /**
@@ -53,6 +65,7 @@ public class WebServiceTest {
 		 // stop the Jetty server after the last test
 		 JettyMain.stopServer();
 	 }
+	 
 	 
 	 /**
 	  * Test Success GET.
@@ -88,6 +101,7 @@ public class WebServiceTest {
 	  */
 	 @Test
 	 public void testPostPass() throws InterruptedException, ExecutionException, TimeoutException {
+		 resetContact();
 		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
 					"<title>Test Title</title>" +
 					"<name>Full Name</name>" +
@@ -112,6 +126,8 @@ public class WebServiceTest {
 	  */
 	 @Test
 	 public void testPostFail() throws InterruptedException, TimeoutException, ExecutionException {
+		 //first post
+		 resetContact();
 		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
 					"<title>Test Title</title>" +
 					"<name>Full Name</name>" +
@@ -122,6 +138,17 @@ public class WebServiceTest {
 		 request.method(HttpMethod.POST);
 		 request.content(content, "application/xml");
 		 ContentResponse res = request.send();
+		 
+		 content = new StringContentProvider("<contact id=\"555\">" +
+					"<title>Test Title</title>" +
+					"<name>Full Name</name>" +
+					"<email>emai@email</email>" +
+					"<phoneNumber>555555555</phoneNumber>"+
+					"</contact>");
+		 request = client.newRequest(serviceUrl+"contacts");
+		 request.method(HttpMethod.POST);
+		 request.content(content, "application/xml");
+		 res = request.send();
 		 
 		 assertEquals("Should response CONFLICT because the id is already exist", Status.CONFLICT.getStatusCode(), res.getStatus());
 	 }
@@ -156,16 +183,29 @@ public class WebServiceTest {
 	  */
 	 @Test
 	 public void testPutFail() throws InterruptedException, TimeoutException, ExecutionException {
+		//first post
+		 resetContact();
 		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
+					"<title>Test Title</title>" +
+					"<name>Full Name</name>" +
+					"<email>emai@email</email>" +
+					"<phoneNumber>555555555</phoneNumber>"+
+					"</contact>");
+		 Request request = client.newRequest(serviceUrl+"contacts");
+		 request.method(HttpMethod.POST);
+		 request.content(content, "application/xml");
+		 ContentResponse res = request.send();
+		 
+		 content = new StringContentProvider("<contact id=\"555\">" +
 					"<title>NEW Title</title>" +
 					"<name>NEW Full Name</name>" +
 					"<email>NEW emai@email</email>" +
 					"<phoneNumber>7777777777</phoneNumber>"+
 					"</contact>");
-		 Request request = client.newRequest(serviceUrl+"contacts/557");
+		 request = client.newRequest(serviceUrl+"contacts/557");
 		 request.method(HttpMethod.PUT);
 		 request.content(content, "application/xml");
-		 ContentResponse res = request.send();
+		 res = request.send();
 		 
 		 assertEquals("PUT Fail should response 400 BAD REQUEST", Status.BAD_REQUEST.getStatusCode(), res.getStatus());
 	 }
@@ -178,9 +218,22 @@ public class WebServiceTest {
 	  */
 	 @Test
 	 public void testDeletePass() throws InterruptedException, ExecutionException, TimeoutException {
-		 Request request = client.newRequest(serviceUrl+"contacts/555");
-		 request.method(HttpMethod.DELETE);
+		//first post
+		 resetContact();
+		 StringContentProvider content = new StringContentProvider("<contact id=\"555\">" +
+					"<title>Test Title</title>" +
+					"<name>Full Name</name>" +
+					"<email>emai@email</email>" +
+					"<phoneNumber>555555555</phoneNumber>"+
+					"</contact>");
+		 Request request = client.newRequest(serviceUrl+"contacts");
+		 request.method(HttpMethod.POST);
+		 request.content(content, "application/xml");
 		 ContentResponse res = request.send();
+		 
+		 request = client.newRequest(serviceUrl+"contacts/555");
+		 request.method(HttpMethod.DELETE);
+		 res = request.send();
 		 
 		 assertEquals("DELETE success should response 200 OK", Status.OK.getStatusCode(), res.getStatus());
 		 res = client.GET(serviceUrl+"contacts/555");

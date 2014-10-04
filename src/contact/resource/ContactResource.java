@@ -77,23 +77,25 @@ public class ContactResource {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getContact(@HeaderParam("If-Match") String match, @HeaderParam("If-None-Match") String noneMatch, @PathParam("id") long id) {
 		Contact contact = dao.find(id);
+		
 		if(contact != null){
 			EntityTag etag = new EntityTag(contact.hashCode()+"");
 			
-			if(noneMatch == null){
-				return Response.ok(contact).cacheControl(cc).tag(etag).build();
+			if(match != null && noneMatch == null){
+				match = match.replace("\"", "");
+				
+				if(!match.equals(etag.getValue())){
+					return Response.notModified().build();
+				}
 			}
-			else{
+			else if(match == null && noneMatch != null){
 				noneMatch = noneMatch.replace("\"", "");
 				
 				if(noneMatch.equals(etag.getValue())){
 					return Response.notModified().build();
 				}
-				else{
-					return Response.ok(contact).cacheControl(cc).tag(etag).build();
-				}
 			}
-			
+			return Response.ok(contact).cacheControl(cc).tag(etag).build();
 		}
 		return Response.noContent().build();
 	}
@@ -115,10 +117,10 @@ public class ContactResource {
 		
 		if(!list.isEmpty()){
 		
-			if(noneMatch == null){
+			if(match != null && noneMatch == null){
 				return Response.ok(ent).cacheControl(cc).tag(etag).build();
 			}
-			else{
+			else if(match == null && noneMatch != null){
 				noneMatch = noneMatch.replace("\"", "");
 				
 				if(noneMatch.equals(etag.getValue())){
@@ -173,34 +175,39 @@ public class ContactResource {
 	@Path("{id}")
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response putContact(@HeaderParam("If-Match") String match, @HeaderParam("If-None-Match") String noneMatch, @PathParam("id") long id, JAXBElement<Contact> contact){
-		Contact c = (Contact)contact.getValue();
+		
+		Contact c = dao.find(id);
+		Contact update = (Contact)contact.getValue();
 		boolean success = false;
 		
+		c.forceApplyUpdate(update);
 		EntityTag etag = new EntityTag(c.hashCode()+"");
 		
-		if(match != null){
-			match = match.replace("\"", "");
-			
-			if(!match.equals(etag.getValue())){
-				return Response.status(Status.PRECONDITION_FAILED).build();
+		if(c != null){
+			if(match != null && noneMatch == null){
+				match = match.replace("\"", "");
+				
+				if(!match.equals(etag.getValue())){
+					return Response.status(Status.PRECONDITION_FAILED).build();
+				}
 			}
-		}
-		else{
-			noneMatch = noneMatch.replace("\"", "");
-			
-			if(noneMatch.equals(etag.getValue())){
-				return Response.status(Status.PRECONDITION_FAILED).build();
+			else if(match == null && noneMatch != null){
+				noneMatch = noneMatch.replace("\"", "");
+				
+				if(noneMatch.equals(etag.getValue())){
+					return Response.status(Status.PRECONDITION_FAILED).build();
+				}
 			}
+			
+			if(id == update.getId()){
+				success = dao.update(c);
+			}
+			if(success){
+				return Response.ok(uriInfo.getAbsolutePath()+"").build();
+			}
+			Response.status(Status.BAD_REQUEST).build();
 		}
-		
-		if(c.getId() == id){
-			success = dao.update(c);
-		}
-		if(success){
-
-			return Response.ok(uriInfo.getAbsolutePath()+"").build();
-		}
-		return Response.status(Status.BAD_REQUEST).build();
+		return Response.status(Status.NOT_FOUND).build();
 	}
 	
 	/**
@@ -218,14 +225,14 @@ public class ContactResource {
 		if(c != null){
 			EntityTag etag = new EntityTag(c.hashCode()+"");
 			
-			if(match != null){
+			if(match != null && noneMatch == null){
 				match = match.replace("\"", "");
 				
 				if(!match.equals(etag.getValue())){
 					return Response.status(Status.PRECONDITION_FAILED).build();
 				}
 			}
-			else{
+			else if(match == null && noneMatch != null){
 				noneMatch = noneMatch.replace("\"", "");
 				
 				if(noneMatch.equals(etag.getValue())){
@@ -235,7 +242,7 @@ public class ContactResource {
 			
 			success = dao.delete(id);
 			if(success){
-				return Response.ok().entity(id + "deleted.").build();
+				return Response.noContent().build();
 			}
 		}
 		return Response.status(Status.BAD_REQUEST).build();
