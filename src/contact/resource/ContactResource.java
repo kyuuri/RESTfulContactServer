@@ -37,7 +37,8 @@ import contact.service.mem.MemDaoFactory;
 @Singleton
 @Path("/contacts")
 public class ContactResource {
-	
+// This is not safe in a singleton.
+// There may be two simultaneous requests using the same ContactResource object.
 	@Context 
 	UriInfo uriInfo;
 	
@@ -67,6 +68,7 @@ public class ContactResource {
 	public Response getContact(@PathParam("id") long id) {
 		if(dao.find(id) != null)
 			return Response.ok(dao.find(id)).build();
+//ERROR should be NOT FOUND
 		return Response.noContent().build();
 	}
 
@@ -83,6 +85,7 @@ public class ContactResource {
 		if(query == null) return getContacts();
 		
 		ent = new GenericEntity<List<Contact>>(dao.findByTitle(query)){};
+// If no matches, return NOT FOUND
 		return Response.ok(ent).build();
 	}
 	
@@ -101,6 +104,7 @@ public class ContactResource {
 			boolean success = dao.save(c);
 			if(success){
 				try {
+//BAD: Don't assume you know the URL. Use uriInfo to get it.
 					return Response.created(new URI("localhost:8080/contacts/" + c.getId())).type(MediaType.APPLICATION_XML).entity(contact).build();
 				} catch (URISyntaxException e) {}
 			}
@@ -142,6 +146,7 @@ public class ContactResource {
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_XML)
 	public Response deleteContact( @PathParam("id") long id){
+// If id doesn't match a contact return NOT FOUND
 		boolean success = dao.delete(id);
 		if(success){
 			return Response.ok().entity(id + "deleted.").build();

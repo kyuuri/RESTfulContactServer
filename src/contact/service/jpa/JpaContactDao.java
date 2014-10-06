@@ -88,6 +88,7 @@ public class JpaContactDao implements ContactDao {
 	 */
 	@Override
 	public boolean delete(long id) {
+// Must use try - catch and rollback
 		em.getTransaction().begin();
 		Contact contact = this.find(id);
 		em.remove(contact);
@@ -129,6 +130,7 @@ public class JpaContactDao implements ContactDao {
 			if(contact == null){
 				throw new IllegalArgumentException("Can't update a null contact");
 			}
+// Don't do this. Just merge(update)
 			contact.forceApplyUpdate(update);
 			em.merge(contact);
 			tx.commit();
