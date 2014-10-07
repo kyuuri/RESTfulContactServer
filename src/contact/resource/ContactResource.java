@@ -97,7 +97,7 @@ public class ContactResource {
 			}
 			return Response.ok(contact).cacheControl(cc).tag(etag).build();
 		}
-		return Response.noContent().build();
+		return Response.status(Status.NOT_FOUND).build();
 	}
 
 	/**
@@ -131,7 +131,7 @@ public class ContactResource {
 				}
 			}
 		}
-		return Response.noContent().build();
+		return Response.status(Status.NOT_FOUND).build();
 	}
 	
 
@@ -152,7 +152,7 @@ public class ContactResource {
 				try {
 					
 					EntityTag etag = new EntityTag(c.hashCode()+"");
-					return Response.created(new URI("localhost:8080/contacts/" + c.getId()))
+					return Response.created(new URI(uriInfo.getAbsolutePath() + "" + c.getId()))
 							.type(MediaType.APPLICATION_XML).entity(c).cacheControl(cc).tag(etag).build();
 					
 				} catch (URISyntaxException e) {}
@@ -180,10 +180,11 @@ public class ContactResource {
 		Contact update = (Contact)contact.getValue();
 		boolean success = false;
 		
-		c.forceApplyUpdate(update);
-		EntityTag etag = new EntityTag(c.hashCode()+"");
 		
 		if(c != null){
+			c.forceApplyUpdate(update);
+			EntityTag etag = new EntityTag(c.hashCode()+"");
+			
 			if(match != null && noneMatch == null){
 				match = match.replace("\"", "");
 				
@@ -242,7 +243,7 @@ public class ContactResource {
 			
 			success = dao.delete(id);
 			if(success){
-				return Response.noContent().build();
+				return Response.ok().build();
 			}
 		}
 		return Response.status(Status.BAD_REQUEST).build();

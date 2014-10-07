@@ -88,11 +88,19 @@ public class JpaContactDao implements ContactDao {
 	 */
 	@Override
 	public boolean delete(long id) {
-		em.getTransaction().begin();
-		Contact contact = this.find(id);
-		em.remove(contact);
-		em.getTransaction().commit();
-		return true;
+		EntityTransaction trans = em.getTransaction();
+		try {
+			trans.begin();
+			Contact contact = this.find(id);
+			em.remove(contact);
+			trans.commit();
+			return true;
+		}catch(EntityExistsException e){
+			if(trans.isActive()){
+				trans.rollback();
+			}
+		}
+		return false;
 	}
 	
 	/**
@@ -129,7 +137,8 @@ public class JpaContactDao implements ContactDao {
 			if(contact == null){
 				throw new IllegalArgumentException("Can't update a null contact");
 			}
-			contact.forceApplyUpdate(update);
+			
+			//contact.forceApplyUpdate(update);
 			em.merge(contact);
 			tx.commit();
 			return true;

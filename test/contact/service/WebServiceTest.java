@@ -89,8 +89,7 @@ public class WebServiceTest {
 	 @Test
 	 public void testGetFail() throws InterruptedException, ExecutionException, TimeoutException {
 		 ContentResponse res = client.GET(serviceUrl+"contacts/999");
-		 assertEquals("The response should be 204 No Content", Status.NO_CONTENT.getStatusCode(), res.getStatus());
-		 assertTrue("Empty Content", res.getContentAsString().isEmpty());
+		 assertEquals("The response should be 404 Not Found", Status.NOT_FOUND.getStatusCode(), res.getStatus());
 	 }
 
 	 /**
@@ -207,7 +206,7 @@ public class WebServiceTest {
 		 request.content(content, "application/xml");
 		 res = request.send();
 		 
-		 assertEquals("PUT Fail should response 400 BAD REQUEST", Status.BAD_REQUEST.getStatusCode(), res.getStatus());
+		 assertEquals("PUT Fail should response 404 Not Found", Status.NOT_FOUND.getStatusCode(), res.getStatus());
 	 }
 	 
 	 /**
@@ -237,7 +236,9 @@ public class WebServiceTest {
 		 
 		 assertEquals("DELETE success should response 200 OK", Status.OK.getStatusCode(), res.getStatus());
 		 res = client.GET(serviceUrl+"contacts/555");
-		 assertTrue("Really deleted", res.getContentAsString().isEmpty());
+
+		 res = client.GET(serviceUrl + "contacts/555");
+		 assertEquals("Can not get the deleted resource should response 404 Not Found", Status.NOT_FOUND.getStatusCode(), res.getStatus());		
 	 }
 	 
 	 /**

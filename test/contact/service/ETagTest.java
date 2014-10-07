@@ -214,10 +214,10 @@ public class ETagTest {
 		
 		request.header(HttpHeader.IF_MATCH, etag);
 		res = request.send();
-		assertEquals("DELETE success should response 204 No Content", Status.NO_CONTENT.getStatusCode(), res.getStatus());
+		assertEquals("DELETE success should response 204 No Content", Status.NO_CONTENT.getStatusCode(), res.getStatus());		
 		
 		res = client.GET(serviceUrl + "contacts/555");
-		assertTrue("Really deleted", res.getContentAsString().isEmpty());
+		assertEquals("Can not get the deleted resource should response 404 Not Found", Status.NOT_FOUND.getStatusCode(), res.getStatus());		
 	}
 
 }
